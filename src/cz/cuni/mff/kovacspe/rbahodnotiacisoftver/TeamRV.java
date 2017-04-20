@@ -16,6 +16,7 @@ public class TeamRV extends TeamBase {
 
     public int[] BestRoundPoints; // null ak nesúťažil v danom kole
                                   // vo formáte level1, ... , level5, odnesene zavazie
+    public int[] tournamentRoundPoints;
     public int ActualRound;
     private Integer Tier;
    

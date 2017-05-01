@@ -8,7 +8,8 @@ package cz.cuni.mff.kovacspe.rbahodnotiacisoftver;
 import java.io.Serializable;
 
 /**
- *
+ * Obsahuje dodatocne udaje o time, ako su clenovia, skola a kategorie v ktorych sutazi.
+ * Sluzi najma na vytvorenie prehladu zucastnenych timov
  * @author Peter
  */
 public class Team extends TeamBase{

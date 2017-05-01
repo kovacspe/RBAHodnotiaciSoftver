@@ -8,7 +8,7 @@ package cz.cuni.mff.kovacspe.rbahodnotiacisoftver;
 
 
 /**
- *
+ * Tim v kategorii Vlastny model
  * @author Peter Kovács
  */
 public class TeamVM extends TeamBase{

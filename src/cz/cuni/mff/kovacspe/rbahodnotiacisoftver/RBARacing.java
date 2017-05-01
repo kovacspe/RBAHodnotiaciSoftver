@@ -5,6 +5,7 @@
  */
 package cz.cuni.mff.kovacspe.rbahodnotiacisoftver;
 
+import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.GridLayout;
 import java.util.ArrayList;
@@ -17,11 +18,13 @@ import javax.swing.JComboBox;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTable;
+import javax.swing.plaf.basic.BasicSplitPaneUI;
 
 /**
- *
+ * Form na hodnotenie kategorie Racing
  * @author Peter
  */
 public class RBARacing extends javax.swing.JFrame {
@@ -30,9 +33,13 @@ public class RBARacing extends javax.swing.JFrame {
     public List<RacingGroup> Groups;
     private JPanel BTNcont;
     JComboBox chooseGroupComboBox;
+    private JPanel tablePanel;
     private JTable table;
     Overview RacingTable;
 
+    /**
+     * Usporiada list RCTeams podla kvalifikacneho casu
+     */
     private void SortTeamsByQualificationTime() {
         Comparator<TeamRC> cmprtr = new Comparator<TeamRC>() {
             @Override
@@ -52,6 +59,9 @@ public class RBARacing extends javax.swing.JFrame {
         RCTeams.sort(cmprtr);
     }
 
+    /**
+     * Usporiada list RCTeams podla ID timu
+     */
     private void SortTeamsByID() {
         Comparator<TeamRC> cmprtr = new Comparator<TeamRC>() {
             @Override
@@ -63,6 +73,10 @@ public class RBARacing extends javax.swing.JFrame {
         RCTeams.sort(cmprtr);
     }
 
+    /**
+     * Vytvori horny MenuBar
+     * @return 
+     */
     private JMenuBar CreateRCMenuBar() {
         JMenuBar mb = new JMenuBar();
         JMenu teamManager = new JMenu("Správa súťaže");
@@ -72,26 +86,46 @@ public class RBARacing extends javax.swing.JFrame {
         teamManager.add(qualification);
 
         JMenuItem makeGroups = new JMenuItem("Vytvoriť skupiny na pretek");
-        makeGroups.addActionListener(e -> CreateRacingGroups(2));
+        makeGroups.addActionListener(e -> {
+            try{
+                    int groupsize =Integer.parseInt(
+                (String) JOptionPane.showInputDialog(this, "Zadajte maximálnu kapacitu skupiny", "Kapacita skupiny", JOptionPane.PLAIN_MESSAGE)
+        );
+            CreateRacingGroups(groupsize);
+            CreateAndShowRacingGUI();}
+        catch(NumberFormatException ex){
+            JOptionPane.showMessageDialog(this, "Nepodarilo sa vytvoriť skupiny. Chyba pri zadávaní veľkosti skupiny", "Chyba", JOptionPane.ERROR_MESSAGE);
+        }});
         teamManager.add(makeGroups);
 
         JMenuItem loadGroups = new JMenuItem("Načítať skupiny na pretek");
         loadGroups.addActionListener(e -> CreateAndShowRacingGUI());
         teamManager.add(loadGroups);
-
+        
+        JMenuItem export = new JMenuItem("Exportovať výsledky pretekov");
+        export.addActionListener(e -> RBAHodnotiaciSoftver.SaveTeams(Groups, "RCFINALRESULTS.res"));
+        teamManager.add(export);
         mb.add(teamManager);
         mb.add(RBAHodnotiaciSoftver.CreateContextSwitchingMenu());
         return mb;
     }
 
+    /**
+     * Vytvori skupiny na pretek. Snazi sa naplnit kazdu skupinu na plnu kapacitu
+     * @param groupSize kapacita skupiny
+     */
     private void CreateRacingGroups(int groupSize) {
         SortTeamsByQualificationTime();
+       
+        
+        RBAHodnotiaciSoftver.SaveTeams(RCTeams, "RCQualifFINALRESULTS.res");
         int i = 0;
         RacingGroup betterGroup = null;
         List<TeamRC> tmp = new ArrayList<>();
         List<RacingGroup> groups = new ArrayList<>();
         while (i < RCTeams.size()) {
             RCTeams.get(i).RaceNumber = i % groupSize;
+            RCTeams.get(i).nativeGroup = "Group" + ((char) (65 + (i / groupSize)));
             tmp.add(RCTeams.get(i));
             if (i % groupSize == groupSize - 1) {
                 RacingGroup rg = new RacingGroup("Group" + ((char) (65 + (i / groupSize))), tmp, 5);
@@ -114,37 +148,62 @@ public class RBARacing extends javax.swing.JFrame {
         RBAHodnotiaciSoftver.SaveTeams(groups, "RacingGroups.dat");
     }
 
+    /**
+     * Nacita skupiny na pretek
+     */
     private void LoadRacingGroups() {
         Groups = RBAHodnotiaciSoftver.LoadTeams("RacingGroups.dat");
     }
 
+    /**
+     * Refreshuje malu aj velku tabulku
+     */
     public void refreshTable() {
         RacingGroup currRacingGroup = ((RacingGroup) chooseGroupComboBox.getSelectedItem());
         RacingTable.UpdateTable(currRacingGroup.WrapGroupData());
+        UpdateTable(currRacingGroup.WrapGroupData());
     }
 
+    /**
+     * Vytvori tlacidla a tabulku pre novu pretekarsku skupinu
+     * @param g 
+     */
     private void setGroup(RacingGroup g) {
         BTNcont.removeAll();
+        tablePanel.removeAll();
 
-        BTNcont.setLayout(new BoxLayout(BTNcont, BoxLayout.Y_AXIS));
+        BTNcont.setLayout(new GridLayout(g.readTeams().size(), 1));
         for (TeamRC t : g.readTeams()) {
-            TeamRCBTN b = new TeamRCBTN(t.toString(), g, t, this);
+            TeamRCBTN b = new TeamRCBTN(t.toStringInRace(), g, t, this);
             BTNcont.add(b);
         }
+        String header2[] = {"Pozícia", "Názov tímu", "Kolo", "Stav"};
+        table = new JTable(g.WrapGroupData(),header2);
+        tablePanel.setLayout(new BorderLayout());
+        tablePanel.add(table.getTableHeader(), BorderLayout.NORTH);
+        tablePanel.add(table, BorderLayout.CENTER);
+        tablePanel.setVisible(true);
+        tablePanel.repaint();
         BTNcont.repaint();
         this.pack();
     }
 
+    /**
+     * Spusti pretek alebo ukonci pretek. Pred pretekom resetuje vysledky timov a otvori tabulku, ktora sa da umiestnit na dataprojektor
+     */
     private void StartRace() {
-        
+
         RacingGroup currRacingGroup = ((RacingGroup) chooseGroupComboBox.getSelectedItem());
-        
-        if (!currRacingGroup.isRunning){
+
+        if (!currRacingGroup.isRunning) {
             currRacingGroup.ResetResults();
-        RacingTable = new Overview();        
-        String[] header = {"Pozícia", "Názov tímu", "Kolo", "Stav"};
-        RacingTable.InitTable(currRacingGroup.WrapGroupData(), header);
-        RacingTable.setVisible(true);
+            currRacingGroup.run();
+            RacingTable = new Overview();
+            String[] header = {"Pozícia", "Názov tímu", "Kolo", "Stav"};
+            RacingTable.InitTable(currRacingGroup.WrapGroupData(), header);
+            RacingTable.setVisible(true);
+            
+
         } else {
             BTNcont.removeAll();
             BTNcont.repaint();
@@ -152,29 +211,49 @@ public class RBARacing extends javax.swing.JFrame {
         }
     }
 
+    /**
+     * Vytvori GUI pre pretek
+     */
     public void CreateAndShowRacingGUI() {
         //this.CreateRCMenuBar();
         Container cont = this.getContentPane();
         cont.removeAll();
         LoadRacingGroups();
-        cont.setLayout(new GridLayout(2, 2));
+        cont.setLayout(new BorderLayout());
+
+        JPanel control = new JPanel();
+        control.setLayout(new GridLayout(1, 2));
 
         chooseGroupComboBox = new JComboBox();
         Groups.forEach(g -> chooseGroupComboBox.addItem(g));
         chooseGroupComboBox.addActionListener(e -> setGroup((RacingGroup) chooseGroupComboBox.getSelectedItem()));
-        cont.add(chooseGroupComboBox);
+        control.add(chooseGroupComboBox);
         JButton BTNStart = new JButton("Start");
         BTNStart.addActionListener(e -> {
             StartRace();
         });
-        cont.add(BTNStart);
+
+        control.add(BTNStart);
+        
+        cont.add(control, BorderLayout.NORTH);
+        
+        JPanel groupStuff = new JPanel();
+        groupStuff.setLayout(new GridLayout(1,2));
         BTNcont = new JPanel();
-        cont.add(BTNcont);
-        table = new JTable();
-        cont.add(table);
+        //BTNcont.ad
+        groupStuff.add(BTNcont);
+        tablePanel = new JPanel();
+        groupStuff.add(tablePanel);
+        cont.add(groupStuff);
         this.pack();
+
+        //this.
     }
 
+    /**
+     * Zabali kvalifikacne vysledky do formatu tabulky
+     * @return 
+     */
     private String[][] WrapRCQualificationData() {
         SortTeamsByID();
         String[][] table = new String[RCTeams.size()][4];
@@ -188,7 +267,11 @@ public class RBARacing extends javax.swing.JFrame {
         return table;
     }
 
+    /**
+     * Otvori tabulku v ktorej sa daju upravovat casy kvalifikacnych jazd
+     */
     private void OpenQualificationTable() {
+        if (!RCTeams.isEmpty()){
         Overview over = new Overview();
         over.setTitle("Racing - kvalifikácia");
         String[] header = {"Team ID", "Názov tímu", "Najlepšia jazda", "Poznámka"};
@@ -197,6 +280,7 @@ public class RBARacing extends javax.swing.JFrame {
         over.InitSaveBTN();
         over.setVisible(true);
         System.out.println("Tabulka hodnotenia bz mala byt otvorena");
+        }
     }
 
     void LoadTeams() {
@@ -206,6 +290,20 @@ public class RBARacing extends javax.swing.JFrame {
 
     void SaveTeams() {
         RBAHodnotiaciSoftver.SaveTeams(RCTeams, "RC.res");
+    }
+
+    /**
+     * Rehreshuje malu tabulku, pri preteku.
+     * @param data data tabulky
+     */
+    public void UpdateTable(String[][] data) {
+        
+        for (int i = 0; i < data.length; i++) {
+            for (int j = 0; j < data[0].length; j++) {
+                table.setValueAt(data[i][j], i, j);
+            }
+        }
+
     }
 
     /**

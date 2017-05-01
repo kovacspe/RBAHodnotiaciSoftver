@@ -5,24 +5,26 @@
  */
 package cz.cuni.mff.kovacspe.rbahodnotiacisoftver;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.List;
+import javax.swing.JOptionPane;
 
 /**
- *
+ * Uvodny Form, ktory sluzi na administraciu sutaze
  * @author Peter
  */
 public class RBAForm extends javax.swing.JFrame {
 
-    
-    
-    public void WriteTeams(List<Team> AllTeams){
+    public void WriteTeams(List<Team> AllTeams) {
         jTextArea1.setText(null);
-        for(Team t:AllTeams){
-            
-            jTextArea1.append(t.getTeamID()+" | "+t.Name+"\n");
+        for (Team t : AllTeams) {
+
+            jTextArea1.append(t.getTeamID() + " | " + t.Name + "\n");
         }
     }
-    
+
     /**
      * Creates new form RBAForm
      */
@@ -74,7 +76,7 @@ public class RBAForm extends javax.swing.JFrame {
             }
         });
 
-        jButton4.setText("Spusti hodnotenie Vlastného modelu");
+        jButton4.setText("Skonvertuj výsledky do .tex");
         jButton4.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton4ActionPerformed(evt);
@@ -87,14 +89,12 @@ public class RBAForm extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addGap(27, 27, 27)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 230, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(76, 76, 76)
-                        .addComponent(jButton4, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 230, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 230, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 29, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jButton2, javax.swing.GroupLayout.DEFAULT_SIZE, 230, Short.MAX_VALUE)
+                    .addComponent(jButton3, javax.swing.GroupLayout.DEFAULT_SIZE, 230, Short.MAX_VALUE)
+                    .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, 230, Short.MAX_VALUE)
+                    .addComponent(jButton4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 405, Short.MAX_VALUE)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 389, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(30, 30, 30))
         );
@@ -105,13 +105,13 @@ public class RBAForm extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 469, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jButton4, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
                         .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jButton4, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -122,7 +122,7 @@ public class RBAForm extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-       RBAHodnotiaciSoftver.MakeEmptyResultFiles();
+        RBAHodnotiaciSoftver.MakeEmptyResultFiles();
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
@@ -133,8 +133,44 @@ public class RBAForm extends javax.swing.JFrame {
         RBAHodnotiaciSoftver.LoadAndCreateTeams();
     }//GEN-LAST:event_jButton3ActionPerformed
 
+    /**
+     * Skusi previest vsetky vysledky do TeX formatu
+     * @param evt 
+     */
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
-       RBAHodnotiaciSoftver.ChangeMode(Modes.VLASTNY_MODEL);
+        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream("VMFINALRESULTS.res"))) {
+            List<TeamVM> teams = (List<TeamVM>) in.readObject();
+            TeXConvertor.ConvertVMResultsToTeX(teams);
+        } catch (IOException | ClassNotFoundException ex) {
+            JOptionPane.showMessageDialog(null, "Nepodarilo sa načítať výsledky Vlastného modelu. Súbor \"VMFINALRESULTS.res\" nebol nebol nájdený alebo je poškodený.", "RBA", JOptionPane.WARNING_MESSAGE);
+        }
+        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream("RCQualifFINALRESULTS.res"))) {
+            List<TeamRC> teams = (List<TeamRC>) in.readObject();
+            TeXConvertor.ConvertRCQualifiactionResultsToTeX(teams);
+        } catch (IOException | ClassNotFoundException ex) {
+            JOptionPane.showMessageDialog(null, "Nepodarilo sa načítať výsledky Racing - kvalifikácia. Súbor \"VMFINALRESULTS.res\" nebol nebol nájdený alebo je poškodený.", "RBA", JOptionPane.WARNING_MESSAGE);
+        }
+        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream("RCFINALRESULTS.res"))) {
+            List<RacingGroup> teams = (List<RacingGroup>) in.readObject();
+            TeXConvertor.ConvertRCResultsToTeX(teams);
+        } catch (IOException | ClassNotFoundException ex) {
+            JOptionPane.showMessageDialog(null, "Nepodarilo sa načítať výsledky Racing - kvalifikácia. Súbor \"VMFINALRESULTS.res\" nebol nebol nájdený alebo je poškodený.", "RBA", JOptionPane.WARNING_MESSAGE);
+        }
+        
+        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream("RVQualifFINALRESULTS.res"))) {
+            List<TeamRV> teams = (List<TeamRV>) in.readObject();
+            TeXConvertor.ConvertRVQualifResultsToTeX(teams);
+        } catch (IOException | ClassNotFoundException ex) {
+            JOptionPane.showMessageDialog(null, "Nepodarilo sa načítať výsledky Roboticka vyzva - kvalifikácia. Súbor \"VMFINALRESULTS.res\" nebol nebol nájdený alebo je poškodený.", "RBA", JOptionPane.WARNING_MESSAGE);
+        }
+
+         try (ObjectInputStream in = new ObjectInputStream(new FileInputStream("RVFINALRESULTS.res"))) {
+            List<TeamRV> teams = (List<TeamRV>) in.readObject();
+            TeXConvertor.ConvertRVResultsToTeX(teams);
+        } catch (IOException | ClassNotFoundException ex) {
+            JOptionPane.showMessageDialog(null, "Nepodarilo sa načítať výsledky Roboticka vyzva - kvalifikácia. Súbor \"VMFINALRESULTS.res\" nebol nebol nájdený alebo je poškodený.", "RBA", JOptionPane.WARNING_MESSAGE);
+        }
+
     }//GEN-LAST:event_jButton4ActionPerformed
 
     /**

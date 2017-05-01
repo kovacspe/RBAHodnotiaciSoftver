@@ -21,7 +21,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
 /**
- *
+ * Form pre hodnotenie kategorie Vlasny model
  * @author Peter
  */
 public class RBAVlastnyModel extends javax.swing.JFrame {
@@ -36,9 +36,27 @@ public class RBAVlastnyModel extends javax.swing.JFrame {
      */
     void SortTeamsByNumberOfPoints() {
         Comparator<TeamVM> cmprtr = new Comparator<TeamVM>() {
-            
+
             public int compare(TeamVM t1, TeamVM t2) {
                 return t2.getSum() - t1.getSum();
+            }
+        };
+        VMTeams.sort(cmprtr);
+    }
+
+    /**
+     * Utriedi list tímov podľa Tier a potom podla počtu bodov.
+     */
+    void SortTeamsByTierAndNumberOfPoints() {
+        Comparator<TeamVM> cmprtr = new Comparator<TeamVM>() {
+
+            @Override
+            public int compare(TeamVM t1, TeamVM t2) {
+                if (t2.Tier.equals(t1.Tier)) {
+                    return t2.getSum() - t1.getSum();
+                } else {
+                    return t1.Tier - t2.Tier;
+                }
             }
         };
         VMTeams.sort(cmprtr);
@@ -51,7 +69,7 @@ public class RBAVlastnyModel extends javax.swing.JFrame {
         TeamsComboBox.removeAllItems();
         VMTeams = RBAHodnotiaciSoftver.LoadTeams("VM.res");
         VMTeams.forEach(t -> TeamsComboBox.addItem(t.getTeamID() + " | " + t.Name));
-        
+
     }
 
     /**
@@ -83,9 +101,9 @@ public class RBAVlastnyModel extends javax.swing.JFrame {
             data[i][6] = Integer.toString(team.BonusPoints);
             data[i][7] = Integer.toString(team.getSum());
             data[i][8] = Integer.toString(team.Tier);
-            
+
         });
-        
+
         return data;
     }
 
@@ -107,22 +125,25 @@ public class RBAVlastnyModel extends javax.swing.JFrame {
         saveteam.addActionListener(e -> {
             SerializeTeams();
         });
-        export.addActionListener(e -> SerializeTeams("FINALRESULTS"));
-        
+        export.addActionListener(e -> {
+            SortTeamsByTierAndNumberOfPoints();
+            SerializeTeams("FINALRESULTS");
+        });
+
         overview.addActionListener((ActionEvent e) -> {
             Overview FormOverview = new Overview();
-            
+
             Object[] header = {"Číslo tímu", "Názov tímu", "Softvér", "Konštrukcia", "Kreativita", "Prezentácia", "Bonus", "Suma", "Umiestnenie"};
-            int[] discols = {0,1};
-            FormOverview.InitTable(WrapData(), header,discols);
-            
-            
+            int[] discols = {0, 1};
+            FormOverview.InitTable(WrapData(), header, discols);
+
             FormOverview.InitSaveBTN();
-            
+            FormOverview.setVisible(true);
         });
         menu.add(loadteam);
         menu.add(saveteam);
         menu.add(overview);
+        menu.add(export);
         menubar.add(RBAHodnotiaciSoftver.CreateContextSwitchingMenu());
         return menubar;
     }
@@ -143,7 +164,7 @@ public class RBAVlastnyModel extends javax.swing.JFrame {
         jSlider4.addChangeListener(e -> {
             jLabel8.setText(String.valueOf(jSlider4.getValue()));
         });
-        
+
         jSlider1.addChangeListener(e -> {
             jLabel10.setText("Spolu: " + String.valueOf(CountVMPoints()));
         });
@@ -159,12 +180,12 @@ public class RBAVlastnyModel extends javax.swing.JFrame {
         jTextField1.addActionListener(e -> {
             jLabel10.setText("Spolu: " + String.valueOf(CountVMPoints()));
         });
-        
+
         jButton1.addActionListener(e -> {
             SaveTeamPoints(VMTeams.get(TeamsComboBox.getSelectedIndex()));
             SerializeTeams();
         });
-        
+
         TeamsComboBox.addActionListener(e -> {
             if (TeamsComboBox.getItemCount() > 0) {
                 SetSliders(VMTeams.get(TeamsComboBox.getSelectedIndex()));
@@ -221,13 +242,13 @@ public class RBAVlastnyModel extends javax.swing.JFrame {
      * @param label - Špeciálne označenie súboru.
      */
     void SerializeTeams(String label) {
-        RBAHodnotiaciSoftver.SaveTeams(VMTeams,"VM"+label+".res");
+        RBAHodnotiaciSoftver.SaveTeams(VMTeams, "VM" + label + ".res");
     }
-    
+
     public RBAVlastnyModel() {
         initComponents();
         initListeners();
-        
+
     }
 
     /**

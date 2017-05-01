@@ -6,37 +6,57 @@
 package cz.cuni.mff.kovacspe.rbahodnotiacisoftver;
 
 /**
- *
+ * Tim v kategorii Racing 
  * @author Peter
  */
 public class TeamRC extends TeamBase {
 
     public String note;
+    public String nativeGroup;
     private Integer BestQualificationTime;
     private int RaceRound;
     private int RaceRoundEntry;
     public int RaceNumber;
     boolean finished;
     
+    /**
+     * vracia cislo kola v ktorom sa model nachadza
+     * @return 
+     */
     public int getRaceRound(){
         return RaceRound;
     }
     
+    /**
+     * Vracia poradie v kole
+     * @return 
+     */
     public int getRaceRoundEntry(){
         return RaceRoundEntry;
     }
     
+    /**
+     * Vyvola sa po prejdeni cielovej ciary. Prepise polohu modelu
+     * @param Entry poradie v kole
+     */
     public void passFinishLine(int Entry){
         RaceRound++;
         RaceRoundEntry=Entry;
     }
-    
+    /**
+     * Vyresetuje vysledky preteku, teda nastavi kolo na nulu
+     */
     public void resetRaceStatus(){
         RaceRound=0;
         RaceRoundEntry=RaceNumber;
         finished=false;
     }
 
+    /**
+     * Premiena cas vo formate MM:SS na sekundy
+     * @param time cas vo formate MM:SS
+     * @return cas v seknudach
+     */
     public static Integer ConvertTimeToSeconds(String time) {
         String[] MinSec = time.split(":");
         try {
@@ -46,6 +66,10 @@ public class TeamRC extends TeamBase {
         }
     }
 
+    /**
+     * Premiena kvalifikacny cas timu z ulozenych sekund na format MM:SS
+     * @return cas vo formate MM:SS
+     */
     public String getTimeConvertedToString() {
         String s;
         try {
@@ -56,10 +80,18 @@ public class TeamRC extends TeamBase {
         return s;
     }
 
+    /**
+     * Vracia ci model uz odjazdil kvalifikacnu jazdu
+     * @return 
+     */
     public boolean isTimeInitialized() {
         return BestQualificationTime != null;
     }
 
+    /**
+     * Priradzuje kvalifikacny cas
+     * @param time 
+     */
     public void setBestQualificationTime(Integer time) {
         BestQualificationTime = time;
     }
@@ -80,8 +112,8 @@ public class TeamRC extends TeamBase {
         resetRaceStatus();
     }
     
-    @Override
-    public String toString(){
+    
+    public String toStringInRace(){
         return Name+"("+RaceNumber+")";
     }
 

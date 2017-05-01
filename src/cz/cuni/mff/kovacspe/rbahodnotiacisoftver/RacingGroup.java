@@ -10,13 +10,15 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- *
+ * Skupina timov na pretek. V hlavnom preteku vzdy sutazi skupina timov, ktore sa medzi sebou pretekaju.
+ * Obsahuje funkcie na ovladanie preteku a postup najlepsich pretekarov do lepsej skupiny
  * @author Peter
  */
 public class RacingGroup implements Serializable {
 
     private List<TeamRC> teams;
     boolean isRunning;
+    boolean isFinal;
     String groupLabel;
     RacingGroup betterGroup; // null ak je to prva skupina
     private int maxRounds;
@@ -28,7 +30,7 @@ public class RacingGroup implements Serializable {
         String[][] data = new String[teams.size()][4];
         for (int i = 0; i < teams.size(); i++) {
             data[i][0] = (i + 1) + ".";
-            data[i][1] = teams.get(i).toString();
+            data[i][1] = teams.get(i).toStringInRace();
             data[i][2] = teams.get(i).getRaceRound() + "";
             if (teams.get(i).finished) {
                 data[i][3] = "FINISHED";
@@ -44,9 +46,14 @@ public class RacingGroup implements Serializable {
         this.maxRounds = maxRounds;
         this.teams = teams;
         isRunning = false;
+        isFinal = false;
         counter = teams.size() - 1;
+        ResetResults();
     }
 
+    /**
+     * Zoradi timy podla poradia v tomto preteku
+     */
     private void SortTeamsByRace() {
         teams.sort(new Comparator<TeamRC>() {
             @Override
@@ -65,14 +72,21 @@ public class RacingGroup implements Serializable {
         });
     }
 
+    /**
+     * Ulozi tuto skupinu ako finalnu
+     */
     public void SaveFinalResults() {
         SortTeamsByRace();
-
+        
         MoveWinnersToBetterGroup();
+        isFinal=true;
         RBAHodnotiaciSoftver.SaveTeams(teams, groupLabel + "_FINAL.res");
     }
 
-    public void ResetResults() {
+    /**
+     * Pripravy ciste vysledky pre kazdy tim
+     */
+    public final void ResetResults() {
         for (int i = 0; i < teams.size(); i++) {
             teams.get(i).RaceNumber = i + 1;
             teams.get(i).resetRaceStatus();
@@ -81,19 +95,33 @@ public class RacingGroup implements Serializable {
         for (int i = 0; i < maxRounds; i++) {
             roundEntryNumbers[i] = 0;
         }
-        isRunning = true;
+        
     }
-
-    public List<TeamRC> readTeams() {
+    public void run(){
+        isRunning=true;
+    }
+    /**
+     * vrati timy v skupine
+     * @return 
+     */
+    
+public List<TeamRC> readTeams() {
         return teams;
     }
 
+    /**
+     * prida tim do skupiny
+     * @param team 
+     */
     public void addTeam(TeamRC team) {
         counter++;
         team.RaceNumber = counter;
         teams.add(team);
     }
 
+    /**
+     * presunie ak mozno dva vitzne timy do lepsej skupiny
+     */
     public void MoveWinnersToBetterGroup() {
         if (betterGroup != null) {
             SortTeamsByRace();
@@ -109,11 +137,20 @@ public class RacingGroup implements Serializable {
         }
     }
 
+    /**
+     * Vrati poradie v ktorom vosiel pretekar do daneho kola
+     * @param round kolo do ktoreho vosiel
+     * @return poradie v danom kole
+     */
     private int getRoundEntryNumber(int round) {
         roundEntryNumbers[round]++;
         return roundEntryNumbers[round];
     }
 
+    /**
+     * Spusta sa ked tim prejde cielovou ciarov, teda mu treba zapocitat jeho kolo a prepocitat polohu v poradi
+     * @param team tim ktorz prekrocil check point
+     */
     public void finishRound(TeamRC team) {
 
         if (teams.contains(team)) {

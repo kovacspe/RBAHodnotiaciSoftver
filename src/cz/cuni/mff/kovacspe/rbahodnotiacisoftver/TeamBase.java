@@ -8,11 +8,12 @@ package cz.cuni.mff.kovacspe.rbahodnotiacisoftver;
 import java.io.Serializable;
 
 /**
- *
+ * Zakladna trieda tim, od ktorej dedia triedy timov na konkretne kategorie
+ * Obsahuje meno timu a ID
  * @author Peter
  */
 public class TeamBase  implements Serializable{
-        protected int TeamID;
+        private final int TeamID;
     public String Name;
     
         public int getTeamID() {
@@ -26,7 +27,7 @@ public class TeamBase  implements Serializable{
         
             @Override
     public String toString(){
-        return TeamID+" | "+Name;
+        return Name+"("+TeamID+")";
     }
         
 }

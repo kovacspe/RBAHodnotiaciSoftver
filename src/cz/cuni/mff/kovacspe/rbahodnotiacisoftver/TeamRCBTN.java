@@ -8,7 +8,8 @@ package cz.cuni.mff.kovacspe.rbahodnotiacisoftver;
 import javax.swing.JButton;
 
 /**
- *
+ * Tlacidlo timu ked sa jazdi pretek v kategorii Racing
+ * Obsluhuje pripocitavanie kol pre svoj dany tim
  * @author Peter
  */
 public class TeamRCBTN extends JButton{

@@ -1,0 +1,4 @@
+Noobs;Alejova 1;jozko;null;null;true;true;true
+Noobs2;Alejova 1;fero;duro;baci;true;false;true
+Noobs3;Alejova 1;jozko;pista;null;false;true;true
+Loosers;Postova;Lacko;pista;null;true;true;true

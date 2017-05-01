@@ -6,7 +6,7 @@
 package cz.cuni.mff.kovacspe.rbahodnotiacisoftver;
 
 /**
- *
+ * Enum hodnotiacich modov
  * @author Peter
  */
 public enum Modes {

@@ -15,7 +15,8 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
 /**
- *
+ * Ustredna trieda. Obsahuje dolezite staticke metody na ukladanie a nacitavanie struktur.
+ * Vytvara prazdne vysledky, nacitava timy, stara sa o prepinanie hodnotiacich modov
  * @author Peter
  */
 public class RBAHodnotiaciSoftver {
@@ -31,10 +32,31 @@ public class RBAHodnotiaciSoftver {
      */
     public static void LoadAndCreateTeams() {
         AllTeams = new ArrayList<Team>();
-        AllTeams.add(new Team(1, "Noobs", "Alejova 1", "jozko", null, null, true, true, false));
-        AllTeams.add(new Team(2, "Noobs2", "Alejova 1", "fero", "duro", "baci", true, false, false));
-        AllTeams.add(new Team(3, "Noobs3", "Alejova 1", "jozko", "pista", null, false, true, true));
-        AllTeams.add(new Team(4, "Loosers", "Postova", "Lacko", "pista", null, true, true, true));
+        
+        try(BufferedReader br= new BufferedReader(new FileReader("teams.txt"))){
+            String line;
+            int id=0;
+            boolean k1,k2,k3;
+            while((line=br.readLine())!=null){
+                String[] atr = line.split(";");
+                id++;
+                if(atr[2].equals("")) atr[2]=null;
+                if(atr[3].equals("")) atr[3]=null;
+                if(atr[4].equals("")) atr[4]=null;
+                if (atr[5].equals("true")) {k1=true;} else {k1=false;}
+                if (atr[6].equals("true")) {k2=true;} else {k2=false;}
+                if (atr[7].equals("true")) {k3=true;} else {k3=false;}
+                AllTeams.add(new Team(id,atr[0],atr[1],atr[2],atr[3],atr[4],k1,k2,k3));
+                
+                
+            }
+            
+            
+        } catch(IOException ex){
+            JOptionPane.showMessageDialog(null, "Nepodarilo nacitat timy zo suboru: teams.txt", "RBA", JOptionPane.WARNING_MESSAGE);
+        }
+        
+
         SaveTeams(AllTeams,"Teams.res");
     }
 

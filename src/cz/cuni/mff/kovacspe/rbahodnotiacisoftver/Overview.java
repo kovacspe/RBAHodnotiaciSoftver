@@ -16,7 +16,7 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 
 /**
- *
+ * Form, ktory sa pouziva ak treba zobrazit prehladovu tabulku, ci uz pre editovanie vysledkov, alebo len prehlad
  * @author Peter
  */
 public class Overview extends javax.swing.JFrame {
@@ -55,6 +55,10 @@ public class Overview extends javax.swing.JFrame {
         frame.setVisible(true);
     }
     
+    /**
+     * Update tabulky bez zbytocneho prekreslovania
+     * @param data data tabulky
+     */
     public void UpdateTable(String[][] data){
         for (int i = 0; i < data.length; i++) {
             for (int j = 0; j < data[0].length; j++) {
@@ -64,6 +68,12 @@ public class Overview extends javax.swing.JFrame {
         
     }
 
+    /**
+     * Vytvori tabulku, a da do nej hlavicku aj hodnoty, znemozni zmeny na niektorych stlpcoch
+     * @param data data tabulky, z procedure Wrap...
+     * @param ColumnNames hlavicka tabulky
+     * @param discols pole poradovych cisel stlpcov, na ktorych ma byt znemoznena zmena
+     */
     public void InitTable(String[][] data, Object[] ColumnNames, int[] discols) {
         JFrame frame = this;
 
@@ -82,6 +92,7 @@ public class Overview extends javax.swing.JFrame {
         table.setModel(model);
 
         //cont.add(table.getTableHeader(), BorderLayout.PAGE_START);
+        cont.add(table.getTableHeader(), BorderLayout.PAGE_START);
         cont.add(table, BorderLayout.CENTER);
         
         //frame.pack();
@@ -95,6 +106,8 @@ public class Overview extends javax.swing.JFrame {
         JButton btnSave = new JButton("Ulož zmeny");
         if (RBAHodnotiaciSoftver.currMode==Modes.VLASTNY_MODEL)
         btnSave.addActionListener(e -> WrapVMResults());
+        if (RBAHodnotiaciSoftver.currMode==Modes.ROBOTICKA_VYZVA)
+        btnSave.addActionListener(e -> WrapRVResults());
         if (RBAHodnotiaciSoftver.currMode==Modes.RACING);
         btnSave.addActionListener(e -> WrapRCQualificationResults());
 
@@ -123,6 +136,40 @@ public class Overview extends javax.swing.JFrame {
         RBAHodnotiaciSoftver.vm.SerializeTeams();
     }
 
+        /**
+     * Uloží výsledky z tabuľky v prípade, že sa jedná o výsledky Robotickej vyzvy
+     * 
+     */
+    void WrapRVResults() {
+        if (RBAHodnotiaciSoftver.currMode == Modes.ROBOTICKA_VYZVA) {
+            for (int i = 0; i < table.getRowCount(); i++) {
+                int tID = Integer.parseInt((String) table.getValueAt(i, 0));
+                int poz =-1;
+                for (TeamRV t:RBAHodnotiaciSoftver.rv.RVTeams){
+                    if (t.getTeamID()==tID) {poz=RBAHodnotiaciSoftver.rv.RVTeams.indexOf(t);}
+                    
+                    
+                }
+                
+                if (poz>=0){
+                    RBAHodnotiaciSoftver.rv.RVTeams.get(poz).allRoundPoints.get(Integer.parseInt((String) table.getValueAt(i, 2))-1).setPointsForLevel(1, Integer.parseInt((String) table.getValueAt(i, 3))); 
+                    RBAHodnotiaciSoftver.rv.RVTeams.get(poz).allRoundPoints.get(Integer.parseInt((String) table.getValueAt(i, 2))-1).setPointsForLevel(2, Integer.parseInt((String) table.getValueAt(i, 4)));
+                    RBAHodnotiaciSoftver.rv.RVTeams.get(poz).allRoundPoints.get(Integer.parseInt((String) table.getValueAt(i, 2))-1).setPointsForLevel(3, Integer.parseInt((String) table.getValueAt(i, 5)));
+                    RBAHodnotiaciSoftver.rv.RVTeams.get(poz).allRoundPoints.get(Integer.parseInt((String) table.getValueAt(i, 2))-1).setPointsForLevel(4, Integer.parseInt((String) table.getValueAt(i, 6)));
+                    RBAHodnotiaciSoftver.rv.RVTeams.get(poz).allRoundPoints.get(Integer.parseInt((String) table.getValueAt(i, 2))-1).setPointsForLevel(5, Integer.parseInt((String) table.getValueAt(i, 7)));
+                    RBAHodnotiaciSoftver.rv.RVTeams.get(poz).allRoundPoints.get(Integer.parseInt((String) table.getValueAt(i, 2))-1).setWeight(Integer.parseInt((String) table.getValueAt(i, 8)));
+                } else {
+                JOptionPane.showMessageDialog(null, "Chyba v synchronizácií údajov. Čísla tímov alebo mená sa nezhodujú. Vykonané zmeny nie je možné uložiť.", "RBA", JOptionPane.WARNING_MESSAGE);
+              
+                }
+            }
+        }
+        RBAHodnotiaciSoftver.rv.SaveTeams();
+    }
+    
+    /** Pripravy vysledky kvalifikacie na zobrazenie v overwiev tabulke
+     * 
+     */
     void WrapRCQualificationResults() {
         if (RBAHodnotiaciSoftver.currMode == Modes.RACING) {
             for (int i = 0; i < table.getRowCount(); i++) {
